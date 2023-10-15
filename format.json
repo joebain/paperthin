@@ -1,10 +1,10 @@
 {
-	"name": "Paperthin",
-	"version": "1.0",
-	"description": "The default proofing format for Twine 2. Icon designed by <a href=\"http://www.thenounproject.com/Simon Child\">Simon Child</a> from the <a href=\"http://www.thenounproject.com\">Noun Project</a>",
-	"author": "<a href=\"http://chrisklimas.com\">Chris Klimas</a>",
+	"name": "Screenplay",
+	"version": "0.1",
+	"description": "A story format that resembles a screenplay. Uses tags to show specific run-throughs which actors can more easily digest. Icon by DARAYANI from <a href=\"https://thenounproject.com/browse/icons/term/screenplay/\">Noun Project</a> (CC BY 3.0)",
+	"author": "Joe Bain",
 	"image": "icon.svg",
-	"url": "http://twinery.org/",
+	"url": "http://hairyheart.games",
 	"license": "ZLib/Libpng", 
 	"proofing": true
 }
