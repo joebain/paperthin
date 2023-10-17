@@ -1,6 +1,6 @@
 {
 	"name": "Screenplay",
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"description": "A story format that resembles a screenplay. Uses tags to show specific run-throughs which actors can more easily digest. Icon by DARAYANI from <a href=\"https://thenounproject.com/browse/icons/term/screenplay/\">Noun Project</a> (CC BY 3.0)",
 	"author": "Joe Bain",
 	"image": "icon.svg",
