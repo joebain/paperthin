@@ -158,7 +158,7 @@ function addPassage(passage, seq, visited) {
 }
 
 function showRun(saveOriginals) {
-	tagLabelEl.innerText = "Run " + tag;
+	tagLabelEl.innerText = "Run " + selectedTags.join('/');
 
     var story = document.getElementsByTagName("tw-storydata")[0];
     var startPid = story.getAttribute("startnode");
