@@ -3,7 +3,6 @@
 <head>
 <title><!--(bake /data/name_test.txt _if="test")--><!--(bake /data/name_release.txt _if="!test")--></title>
 <meta charset="utf-8">
-<style>
 body
 {
 	font: 10pt Cousine, monospace;
@@ -71,8 +70,14 @@ span.character-line {
 span.sequence-id {
 	display: block;
     position: absolute;
-    left: -50px;
-	font-weight: 700;
+    left: -70px;
+    font-size: 20px;
+}
+span.option-label {
+    display: block;
+    text-align: right;
+    font-style: italic;
+    height: 0;
 }
 @media print
 {    
@@ -81,65 +86,181 @@ span.sequence-id {
 	        display: none !important;
     }
 }
+tw-passagedata[tags="B"] {
+    color: blue;
+}
+tw-passagedata[tags="C"] {
+    color: red;
+}
 </style>
 <script>
-var tag;
-var originalPassages = [];
+var selectedTags = [];
+var passagesById = [];
+var passagesByName = [];
+var positions = [];
+var outputPassages = [];
 var containerEl;
 var tagLabelEl;
 
-const charNameRE = /(\w*):\s*(.*)\n/g;
-const choiceRE = /\[\[.*\]\]/g;
-const dupeNewlineRE = /\n+/g;
-function processPassage(passage, p, tag) {
-	var html = passage.innerHTML;
+const charNameRE = /([^\n:]+): *([^\n]{3,})\n/g;
+const choiceRE = /\[\[(.*)\]\]/g;
+const dupeNewlineRE = /\n{2,}/g;
+function processPassage(passage, id, branchNum) {
+	var baseHtml = passage.innerHTML;
+    var html = "";
+
+    var match;
+    var prevMatchIndex = 0;
+    var n = 0;
+    do {
+        match = choiceRE.exec(baseHtml);
+        if (match) {
+            var name = match[1];
+            if (name in passagesByName) {
+                var _passage = passagesByName[name];
+                html += baseHtml.slice(prevMatchIndex, match.index) + "<span class='option-label'>[Option => " + _passage.id + "]</span><b>" + name + "</b>";
+                prevMatchIndex = match.index+match[0].length;
+            }
+        }
+    } while (match);
+    html += baseHtml.slice(prevMatchIndex);
+
 	html = html.replaceAll(charNameRE, "<span class='character-name'>$1</span><span class='character-line'>$2</span>");
-	html = html.replaceAll(choiceRE, "");
-	html = html.replaceAll(dupeNewlineRE, "\n");
-	html = "<span class='sequence-id'>#" + tag + p + "</span>" + html;
+	html = html.replaceAll(dupeNewlineRE, "\n\n");
+	html = "<span class='sequence-id'>#" + id + "</span>" + html;
+
 	var processedPassage = passage.cloneNode(true);
 	processedPassage.innerHTML = html;
 	return processedPassage;
 }
 
-function showRun(tag, saveOriginals) {
+function addPassage(passage, seq, visited) {
+    if (visited.indexOf(passage.pid) >= 0) return;
+
+    visited.push(passage.pid);
+
+    var tags = passage.tags;
+
+    for (var t = 0; t < selectedTags.length ; t++) {
+        var tag = selectedTags[t];
+        if (tags.indexOf(tag) >= 0) {
+            outputPassages.push(passage);
+            break;
+        }
+    }
+
+
+    for (var p = 0 ; p < passage.next.length ; p++) {
+        addPassage(passage.next[p], seq, visited);
+    }
+}
+
+function showRun(saveOriginals) {
 	tagLabelEl.innerText = "Run " + tag;
 
+    var story = document.getElementsByTagName("tw-storydata")[0];
+    var startPid = story.getAttribute("startnode");
+
 	var passages = document.getElementsByTagName("tw-passagedata");
+    if (saveOriginals) {
+        positions = [];
+        for (var p = passages.length-1; p >= 0 ; p--) {
+            var passage = passages[p];
+            var yPos = parseInt(passage.getAttribute("position").split(',')[1]);
+            if (positions.indexOf(yPos) == -1) {
+                positions.push(yPos);
+            }
+        }
+        positions.sort((a,b) => a-b);
+    }
 	for (var p = passages.length-1; p >= 0 ; p--) {
 		var passage = passages[p];
 		if (saveOriginals) {
-			originalPassages[p] = passage.cloneNode(true);
+            var pid = passage.getAttribute("pid");
+            var name = passage.getAttribute("name");
+            var tags = passage.getAttribute("tags").split(' ');
+            var yPos = parseInt(passage.getAttribute("position").split(',')[1]);
+            var vertIndex = positions.indexOf(yPos);
+            var passageData =  {
+                passage: passage.cloneNode(true),
+                pid: pid,
+                id: tags.join('') + vertIndex,
+                vertIndex: vertIndex,
+                name: name,
+                tags: tags,
+                next: []
+            };
+            passagesById[pid] = passageData;
+            passagesByName[name] = passageData;
 		}
 		passage.remove();
 	}
-	var seq = 1;
-	for (var p = 0 ; p < originalPassages.length ; p++) {
-		var passage = originalPassages[p];
-		var tags = passage.getAttribute("tags");
-		var processedPassage = processPassage(passage, seq, tag);
-		if (tags.split(' ').indexOf(tag) >= 0) {
-			seq++;
-			containerEl.appendChild(processedPassage);
-		}
+    if (saveOriginals) {
+        for (var p in passagesById) {
+            var passage = passagesById[p];
+            var text = passage.passage.innerHTML;
+            var match;
+            do {
+                match = choiceRE.exec(text)
+                if (match) {
+                    var name = match[1];
+                    if (name in passagesByName) {
+                        passage.next.push(passagesByName[name]);
+                    }
+                }
+            } while (match);
+        }
+        for (var p in passagesById) {
+            var passage = passagesById[p];
+            passage.html = processPassage(passage.passage, passage.id);
+        }
+    }
+
+    outputPassages = [];
+    addPassage(passagesById[startPid], 1, []);
+    outputPassages.sort((a, b) => a.vertIndex - b.vertIndex);
+	for (var p = 0 ; p < outputPassages.length ; p++) {
+		var passage = outputPassages[p];
+        containerEl.appendChild(passage.html);
 	}
 }
 
 function onTagSelectChange(event) {
-	tag = event.target.value;
-	showRun(tag);
+    selectedTags = [];
+    for (var t = 0; t < event.target.selectedOptions.length ; t++) {
+        selectedTags.push(event.target.selectedOptions[t].value);
+    }
+	showRun();
+}
+
+function populateTags() {
+    var tags = document.getElementsByTagName("tw-tag");
+	var selectControl = document.getElementById("tag-select");
+    var first = true;
+    for (var t = 0; t < tags.length; t++) {
+        var tagData = tags[t];
+        var option = document.createElement("option");
+        var name = tagData.getAttribute("name");
+        option.value = option.innerText = name;
+        if (first) {
+            option.setAttribute("selected", true);
+            tag = name;
+            first = false;
+        }
+        selectControl.appendChild(option);
+    }
+	selectControl.addEventListener('change', onTagSelectChange);
 }
 
 window.onload = function() {
-	tag = "A";
+    populateTags();
 	containerEl = document.getElementsByTagName("tw-storydata")[0];
 	tagLabelEl = document.createElement("h2");
 	containerEl.appendChild(tagLabelEl);
 
-	showRun(tag, true);
+    selectedTags = ["A"];
+	showRun(true);
 
-	var selectControl = document.getElementById("tag-select");
-	selectControl.addEventListener('change', onTagSelectChange);
 
 }
 </script>
