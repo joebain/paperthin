@@ -1,8 +1,8 @@
 {
-  "name": "storyformatskeleton",
-  "version": "1.0.0",
-  "description": "A skeleton for Twine 2 story formats",
-  "author": "Chris Klimas <chris@twinery.org>",
+  "name": "screenplay",
+  "version": "0.2.1",
+  "description": "A screenplay format for twine, based on paperthin",
+  "author": "Joe Bain <joe@hairyheart.games",
   "license": "Public Domain",
   "dependencies": {
     "grunt": "^0.4.5",
