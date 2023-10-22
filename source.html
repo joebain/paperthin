@@ -75,10 +75,9 @@ span.sequence-id {
     font-size: 20px;
 }
 span.option-label {
-    display: block;
-    text-align: right;
     font-style: italic;
-    height: 0;
+    position: absolute;
+    right: -90px;
 }
 @media print
 {    
@@ -87,10 +86,22 @@ span.option-label {
 	        display: none !important;
     }
 }
+.tag-select-container {
+    position: fixed;
+}
 tw-passagedata[tags="B"] {
     color: blue;
 }
 tw-passagedata[tags="C"] {
+    color: red;
+}
+.option-label.A {
+    color: black;
+}
+.option-label.B {
+    color: blue;
+}
+.option-label.C {
     color: red;
 }
 </style>
@@ -119,7 +130,7 @@ function processPassage(passage, id, branchNum) {
             var name = match[1];
             if (name in passagesByName) {
                 var _passage = passagesByName[name];
-                html += baseHtml.slice(prevMatchIndex, match.index) + "<span class='option-label'>[Option => " + _passage.id + "]</span><b>" + name + "</b>";
+                html += baseHtml.slice(prevMatchIndex, match.index) + "<span class='option-label " + _passage.tags.join(' ') + "'>[Opt ➼ " + _passage.id + "]</span><b>" + name + "</b>";
                 prevMatchIndex = match.index+match[0].length;
             }
         }
@@ -269,7 +280,7 @@ window.onload = function() {
 
 <body>
 
-<div class="no-print">
+<div class="no-print tag-select-container">
 <label for="tag-select">Choose a run:</label>
 <select name="runs" id="tag-select" multiple>
 </select>
